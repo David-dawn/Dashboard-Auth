@@ -43,18 +43,32 @@ export default function Login() {
   setError("");
   setLoading(true);
 
-  try {
-    await signInWithEmailAndPassword(auth, formData.email, formData.password);
-    navigate("/dashboard");
-  } catch (err) {
-    const message =
-      err.code === "auth/user-not-found"
-        ? "No account found with this email."
-        : err.code === "auth/wrong-password"
-        ? "Incorrect password."
-        : "Login failed. Please try again.";
-    setError(message);
+try {
+  await signInWithEmailAndPassword(auth, formData.email, formData.password);
+  navigate("/dashboard");
+} catch (err) {
+  let message;
+
+  switch (err.code) {
+    case "auth/user-not-found":
+      message = "No account found with this email.";
+      break;
+    case "auth/wrong-password":
+      message = "Incorrect password.";
+      break;
+    case "auth/invalid-email":
+      message = "Invalid email format.";
+      break;
+    case "auth/user-disabled":
+      message = "This account has been disabled.";
+      break;
+    default:
+      message = "Login failed. Please check your credentials.";
   }
+
+  setError(message);
+}
+
 
   setLoading(false);
 };
