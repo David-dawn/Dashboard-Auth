@@ -22,21 +22,43 @@ export default function Login() {
     if (type === "checkbox") setRememberMe(checked);
   };
 
-  const handleLogin = async () => {
-    if (!formData.email || !formData.password) {
-      setError("Please enter both email and password.");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.message);
-    }
-    setLoading(false);
-  };
+ const handleLogin = async () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!formData.email || !formData.password) {
+    setError("Please enter both email and password.");
+    return;
+  }
+
+  if (!emailRegex.test(formData.email)) {
+    setError("Please enter a valid email address.");
+    return;
+  }
+
+  if (formData.password.length < 6) {
+    setError("Password must be at least 6 characters long.");
+    return;
+  }
+
+  setError("");
+  setLoading(true);
+
+  try {
+    await signInWithEmailAndPassword(auth, formData.email, formData.password);
+    navigate("/dashboard");
+  } catch (err) {
+    const message =
+      err.code === "auth/user-not-found"
+        ? "No account found with this email."
+        : err.code === "auth/wrong-password"
+        ? "Incorrect password."
+        : "Login failed. Please try again.";
+    setError(message);
+  }
+
+  setLoading(false);
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

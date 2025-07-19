@@ -41,25 +41,61 @@ export default function Register() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateAccount = () => {
-    if (!formData.email || !formData.password) {
-      setError("Please fill in your email and password.");
-      return;
-    }
-    setError("");
-    setStep(2);
-  };
+ const handleCreateAccount = () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const handleNext = () => {
-    if (!formData.fullName || !formData.gender || !formData.phone) {
-      setError("Please complete all required fields.");
+  if (!formData.email || !formData.password) {
+    setError("Please fill in your email and password.");
+    return;
+  }
+
+  if (!emailRegex.test(formData.email)) {
+    setError("Please enter a valid email address.");
+    return;
+  }
+
+  if (formData.password.length < 8) {
+    setError("Password must be at least 8 characters long.");
+    return;
+  }
+
+  setError("");
+  setStep(2);
+};
+
+
+const handleNext = () => {
+  const phoneRegex = /^[0-9]{7,15}$/;
+
+  if (!formData.fullName || !formData.gender || !formData.phone) {
+    setError("Please complete all required fields.");
+    return;
+  }
+
+  if (!phoneRegex.test(formData.phone)) {
+    setError("Please enter a valid phone number.");
+    return;
+  }
+
+  if (formData.birthday) {
+    const enteredDate = new Date(formData.birthday);
+    const today = new Date();
+
+    if (enteredDate > today) {
+      setError("Birthday cannot be a future date.");
       return;
     }
-    setError("");
-    setStep(3);
-  };
+  }
+
+  setError("");
+  setStep(3);
+};
+
+
 
 const handleRegister = async () => {
+  const zipRegex = /^[0-9]{4,10}$/;
+
   if (
     !formData.street ||
     !formData.city ||
@@ -70,23 +106,32 @@ const handleRegister = async () => {
     return;
   }
 
+  if (!zipRegex.test(formData.zip)) {
+    setError("Please enter a valid ZIP code (4–10 digits).");
+    return;
+  }
+
   setLoading(true);
- try {
-  const userCredential = await createUserWithEmailAndPassword(
-    auth,
-    formData.email,
-    formData.password
-  );
-  await updateProfile(userCredential.user, {
-    displayName: formData.fullName
-  });
+  try {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      formData.email,
+      formData.password
+    );
+
+    await updateProfile(userCredential.user, {
+      displayName: formData.fullName,
+    });
 
     setStep(4);
-} catch (err) {
-  setError(err.message);
-}
-  setLoading(false);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
 };
+
+
 
 
 
@@ -738,6 +783,7 @@ const handleRegister = async () => {
                     className="w-full p-3 border border-gray-300 rounded-lg"
                     value={formData.street}
                     onChange={handleChange}
+                    required
                   />
 
                   <div className="relative">
